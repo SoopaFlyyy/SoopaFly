@@ -6,7 +6,7 @@ Research date: 2026-11-10
 
 https://github.com/script-money/sorare-nba-lineup-tool
 
-The reference repository is public, MIT-licensed, and README says it was working for the 2023-24 season. It is a legacy implementation: use its documented algorithms and API patterns as research, not as a drop-in current rules engine.
+The reference repository is public. Its `pyproject.toml` declares an MIT license, although the inspected repository tree does not list a separate LICENSE file. Its README says it was working for the 2023-24 season. It is a legacy implementation: use its documented algorithms and API patterns as research, not as a drop-in current rules engine.
 
 ## Useful techniques verified in source
 
