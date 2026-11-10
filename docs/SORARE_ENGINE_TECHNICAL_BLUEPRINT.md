@@ -157,7 +157,7 @@ Projection inputs:
 
 Outputs must include mean, uncertainty and percentiles. Calibrate on historical Sorare results, not generic box score scoring alone.
 
-Apply exact Sorare scoring rules in one versioned rule module. User-specific rule reminder: turnovers must be -3 in relevant score calculations. Do not import the reference repo's custom -2 turnover formula.
+Apply exact Sorare scoring rules in one versioned rule module. Verified Sorare NBA help currently specifies turnovers at -2. The user's earlier -3 preference conflicts with Sorare's published scoring matrix; do not use -3 in official Sorare score projections. Keep the scoring matrix versioned and re-check official rules when Sorare publishes a change.
 
 For any card:
 `boosted_score = base_score * (1 + exact_card_bonus)`
@@ -172,19 +172,19 @@ First read current Sorare contest metadata and requirements. Use the modern equi
 
 Treat Sorare's eligibility as a validation source. Local optimizer still enforces explicit constraints.
 
-User target decks:
-- 2 Champion Limited In-Season
-- 4 Contender Limited In-Season
-- exactly 4 eligible In-Season cards + 1 Classic per deck
-- current verified star / cap rules per competition
-- card cannot appear in more than one simultaneously active deck
-- one card ID per slot; duplicates of a player are different card candidates but cannot break no-duplicate-card rule
-- OUT cards excluded; uncertain cards may appear only in scenario/risk mode, not as safe locked recommendations
-- used/locked cards excluded according to Sorare live state
+NBA 27 (2026-27) strategy baseline, pending live Sorare API validation:
+- Five-card lineup; no position restrictions.
+- Star budget replaces points cap and MVP: Contender 11 Stars, Champion 16 Stars; player Star rating 1–5 in half-star increments, based on L10 and refreshed at Game Week deadline.
+- Do not hardcode the old 120/140 points caps or MVP logic into NBA 27 contests.
+- In-Season Pro/leaderboard lineup rules still require at least four In-Season cards and allow at most one Classic card where the relevant contest specifies that format; verify current requirements from Sorare metadata for each leaderboard.
+- Classic competitions permit past-season cards; do not apply In-Season card restrictions there unless the contest metadata says otherwise.
+- The guide states Daily Pickup is replaced by Arcade in NBA 27. Retire Daily Pickup-specific assumptions unless the live Sorare API exposes a current equivalent.
+- For Game Week contests, only each player's highest-scoring game within the GW counts. Model each player's GW score as max(score across scheduled games), not sum or average. More games create more opportunities but require minutes/availability risk per game.
+- Current game-week split described by the guide: Monday–Thursday and Friday–Sunday; verify actual fixture start/end timestamps from Sorare.
+- OUT cards excluded from safe lineups; Q/D/GTD retained as scenario risks.
+- Use current Sorare server eligibility and contest metadata as the final authority; treat this strategy guide as secondary reference.
 
-Solve all six decks jointly, not one deck at a time. Use a global allocator (integer programming / branch-and-bound) with card-ID uniqueness across decks.
-
-If six decks cannot all be completed, report which constraint blocks each deck and the closest legal alternatives.
+The previous project plan's fixed six-deck target (2 Champion + 4 Contender) is an optimizer target only if those are the competitions currently available and the user still wants that allocation. It is not a Sorare rules requirement. Solve requested lineups jointly with card-ID uniqueness where the competitions overlap in time. Report infeasible decks and closest legal alternatives.
 
 ## Hot Streak optimizer
 
@@ -222,3 +222,30 @@ Unit tests:
 - Run tests and inspect preview APIs/UI.
 - Only after validation, create a PR and review before merge.
 - Never push Sorare tokens, OAuth client secrets, session cookies, or raw account data into Git.
+
+
+## NBA 27 strategy-guide update (2026-11-10)
+
+Reference: https://sirius-sports.github.io/sorare-origin/en/nba-strategy
+
+This is an unofficial guide, so it informs strategy but never overrides Sorare's live contest metadata or official help.
+
+Key implications for the model:
+1. **Star-value optimization:** calculate value as projected GW score relative to Star cost, and identify players whose current role/minutes/usage exceed what their stale L10-derived Star rating implies. Track the Star rating snapshot and the deadline at which it refreshes.
+2. **Five-card no-position roster:** optimizer slots are five generic slots unless contest metadata imposes another restriction.
+3. **Champion / Contender budgets:** use 16 Stars / 11 Stars, respectively, with half-star player ratings. Treat as 2026-27 guide values; verify against the live leaderboard.
+4. **Best game in the GW:** a player's GW contribution is the maximum valid game score across the GW, not the sum. Model game-by-game injury, minutes, matchup and ceiling, then calculate the distribution of the maximum.
+5. **Volatility matters:** include ceiling / upper-percentile outcomes for top finishes, but retain downside and probability of a DNP. Optimize objective by contest type.
+6. **Injury-L10 lag:** identify backups and 6th/7th men whose projected role changes before the Star rating catches up. This directly supports the existing user priority to value rotation players.
+7. **Bonus stacking:** card-specific rarity, XP, season and collection bonuses must be read from actual Sorare card/contest data and applied once. Do not hardcode guide bonus values where live card metadata or rules can differ.
+8. **Injury diligence:** the guide calls out NBA injury reports, ESPN and RotoWire. Continue the existing official NBA + ESPN + Underdog + RotoWire cross-check pipeline.
+9. **Market signals:** price / XP / transfer cost / season status belong in a separate card acquisition-value model, not the pure basketball projection.
+10. **DNP/NG:** both produce zero; scheduled games and expected participation are first-class risk inputs.
+
+### Scoring rule conflict resolved
+The guide and Sorare's official help article both list turnovers as -2, not -3. Official Sorare help is the source of truth for scoring: https://help.sorare.com/hc/en-us/articles/7245592557725-How-are-player-scores-calculated-in-Sorare-NBA. The previous -3 note in this blueprint was incorrect for official Sorare scoring and is superseded. Keep the score matrix versioned and sourced.
+
+### Strategy guide limitations
+- Unofficial and explicitly disclaims affiliation/guaranteed accuracy.
+- Some bonus descriptions may be simplified or season-specific; use current Sorare card/leaderboard fields.
+- Do not assume every competition has identical entry limits, card eligibility, reward rules or lock times. Read live competition requirements.
